@@ -27,7 +27,7 @@ os.makedirs("images", exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--is_train", type=int, default=0, help="0:train 1:gennerate")
 parser.add_argument("--dataset", type=str, default='301', help="name of dataset")
-parser.add_argument("--n_epochs", type=int, default=8, help="number of epochs of training")
+parser.add_argument("--n_epochs", type=int, default=20, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--mask_rate", type=float, default=0.1, help="rate of mask number when testing")
 parser.add_argument("--g1lr", type=float, default=0.0005, help="adam: learning rate")
@@ -226,7 +226,7 @@ if __name__ == '__main__':
                 #根据掩码，用生成值填充缺失值，并保留原始值
                 y = tr_utils.replace_raw(y_3, mask, raw, len)
                 y_33 = y.detach().clone()
-                y_33 = tr_utils.add_cond(y_33 , len , cond_norm)
+                y_33 = tr_utils.add_cond(y_33 , len , cond)
                 y_d1 = model_d1(y_33)
                 y = torch.cat((y, time.unsqueeze(-1)), 2)
                 y_d2 = model_d2(y)
@@ -293,17 +293,18 @@ if __name__ == '__main__':
                 df = pd.DataFrame(test)
                 df.to_csv("./test.csv")"""
                 #print(train_batch.shape)#(64,202,7)
-        g1_state_dict = model_g1.state_dict()
-        g2_state_dict = model_g2.state_dict()
-        d1_state_dict = model_d1.state_dict()      
-        torch.save({
-                'args': opt,
-                'g1_state_dict': g1_state_dict,
-                'g2_state_dict': g2_state_dict,
-                'd1_state_dict': d1_state_dict,
-                }, f'./save_model/model_{opt.dataset}_{opt.log}.model')
+            if epoch >= 15:
+                g1_state_dict = model_g1.state_dict()
+                g2_state_dict = model_g2.state_dict()
+                d1_state_dict = model_d1.state_dict()      
+                torch.save({
+                        'args': opt,
+                        'g1_state_dict': g1_state_dict,
+                        'g2_state_dict': g2_state_dict,
+                        'd1_state_dict': d1_state_dict,
+                        }, f'./save_model/model_{opt.dataset}_{epoch}.model')
     if opt.is_train == 1:
-        modelg1, modelg2, modeld1 = tr_utils.load_model(f'./save_model/model_{opt.dataset}_{opt.log}.model')
+        modelg1, modelg2, modeld1 = tr_utils.load_model(f'./save_model/model_{opt.dataset}_19.model')
         modelg2.eval()
         modelg1.eval()
         device = torch.device(
